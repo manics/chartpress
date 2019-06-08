@@ -27,6 +27,9 @@ charts:
     resetTag: latest
     # Optional image tag prefix
     imageTagPrefix: ''
+    # Optional prefix for git tags if enabled, if you have multiple separately versioned
+    # charts you should set this for each chart
+    gitTagPrefix: ''
     # the git repo whose gh-pages contains the charts
     repo:
       git: jupyterhub/helm-chart
