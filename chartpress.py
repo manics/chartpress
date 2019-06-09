@@ -121,7 +121,7 @@ def render_build_args(options, ns):
     return build_args
 
 
-def build_image(image_path, image_name, build_args=None, dockerfile_path=None):
+def build_image(image_path, image_name, build_args=None, dockerfile_path=None, image_aliases=[]):
     """Build an image
 
     Args:
@@ -131,6 +131,8 @@ def build_image(image_path, image_name, build_args=None, dockerfile_path=None):
     dockerfile_path (str, optional):
         path to dockerfile relative to image_path
         if not `image_path/Dockerfile`.
+    image_aliases (list(str), optional):
+        list of additional 'name:tag' image aliases
     """
     cmd = ['docker', 'build', '-t', image_name, image_path]
     if dockerfile_path:
@@ -139,6 +141,9 @@ def build_image(image_path, image_name, build_args=None, dockerfile_path=None):
     for k, v in (build_args or {}).items():
         cmd += ['--build-arg', '{}={}'.format(k, v)]
     check_call(cmd)
+    for alias in image_aliases:
+        check_call(['docker', 'tag', image_name, alias])
+
 
 @lru_cache()
 def docker_client():
@@ -201,7 +206,7 @@ def image_needs_building(image):
     return image_needs_pushing(image)
 
 
-def build_images(prefix, images, tag=None, commit_range=None, push=False, chart_version=None, skip_build=False, tag_prefix=""):
+def build_images(prefix, images, tag=None, commit_range=None, push=False, chart_version=None, skip_build=False, tag_prefix="", tag_latest=False):
     """Build a collection of docker images
 
     Args:
@@ -224,6 +229,8 @@ def build_images(prefix, images, tag=None, commit_range=None, push=False, chart_
         Whether to skip the actual image build (only updates tags).
     tag_prefix (str):
         An optional prefix on all image tags (in front of chart_version or tag)
+    tag_latest (bool):
+        Whether to also tag images with the latest tag
     """
     value_modifications = {}
     for name, options in images.items():
@@ -242,6 +249,10 @@ def build_images(prefix, images, tag=None, commit_range=None, push=False, chart_
         image_tag = tag_prefix + image_tag
         image_spec = '{}:{}'.format(image_name, image_tag)
 
+        image_aliases = []
+        if tag_latest:
+            image_aliases = ['{}:latest'.format(image_name)]
+
         value_modifications[options['valuesPath']] = {
             'repository': image_name,
             'tag': SingleQuotedScalarString(image_tag),
@@ -257,7 +268,7 @@ def build_images(prefix, images, tag=None, commit_range=None, push=False, chart_
 
         if tag or image_needs_building(image_spec):
             build_args = render_build_args(options, template_namespace)
-            build_image(image_path, image_spec, build_args, options.get('dockerfilePath'))
+            build_image(image_path, image_spec, build_args, options.get('dockerfilePath'), image_aliases)
         else:
             print(f"Skipping build for {image_spec}, it already exists")
 
@@ -266,6 +277,8 @@ def build_images(prefix, images, tag=None, commit_range=None, push=False, chart_
                 check_call([
                     'docker', 'push', image_spec
                 ])
+                for alias in image_aliases:
+                    check_call(['docker', 'push', alias])
             else:
                 print(f"Skipping push for {image_spec}, already on registry")
     return value_modifications
@@ -394,6 +407,8 @@ def main():
         help='Publish updated chart to gh-pages')
     argparser.add_argument('--tag', default=None,
         help='Use this tag for images & charts')
+    argparser.add_argument('--tag-latest', action='store_true',
+        help='Also tag Docker images with latest tag')
     argparser.add_argument('--git-release', action='store_true',
         help='Only run if no matching git tag, use the unmodified chart version, git tag repository. Handle charts independently.')
     argparser.add_argument('--git-push', action='store_true',
@@ -451,7 +466,8 @@ def main():
                 # exclude `-<hash>` from chart_version prefix for images
                 chart_version=chart_version.split('-', 1)[0],
                 skip_build=args.skip_build or args.reset,
-                tag_prefix=chart.get('imageTagPrefix', '')
+                tag_prefix=chart.get('imageTagPrefix', ''),
+                tag_latest=args.tag_latest,
             )
             build_values(chart['name'], value_mods)
 
