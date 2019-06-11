@@ -357,6 +357,8 @@ def publish_pages(name, paths, git_repo, published_repo, extra_message=''):
     )
     check_call(['git', 'checkout', 'gh-pages'], cwd=checkout_dir)
 
+    check_call(['helm', 'dependency', 'update', name])
+
     # package the latest version into a temporary directory
     # and run helm repo index with --merge to update index.yaml
     # without refreshing all of the timestamps
