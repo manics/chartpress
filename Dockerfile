@@ -26,5 +26,5 @@ RUN apk add --no-cache \
     rmdir linux-amd64 && \
     chmod +x /usr/local/bin/kubectl /usr/local/bin/helm && \
     helm init --client-only
-ADD chartpress.py /usr/local/bin/
-ENTRYPOINT ["/usr/local/bin/chartpress.py"]
+ADD action.sh chartpress.py /usr/local/bin/
+ENTRYPOINT ["/usr/local/bin/action.sh"]
