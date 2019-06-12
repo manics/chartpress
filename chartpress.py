@@ -55,7 +55,8 @@ def git_remote(git_repo):
     github_token = os.getenv(GITHUB_TOKEN_KEY)
     if github_action:
         # GITHUB_TOKEN is set but is used differently inside an Action
-        return 'https://github.com/{0}'.format(git_repo)
+        return 'https://github.com/{0}{1}'.format(
+            git_repo, '.git' if not git_repo.endswith('.git') else '')
     if github_token:
         return 'https://{0}@github.com/{1}'.format(
             github_token, git_repo)
