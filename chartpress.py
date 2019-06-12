@@ -358,11 +358,8 @@ def publish_pages(name, paths, git_repo, published_repo, extra_message=''):
     version = last_modified_commit(*paths)
     checkout_dir = '{}-{}'.format(name, version)
     check_call([
-        'git', 'clone', '--no-checkout',
-        git_remote(git_repo), checkout_dir],
-        echo=False,
-    )
-    check_call(['git', 'checkout', 'gh-pages'], cwd=checkout_dir)
+        'git', 'clone', '-b', 'gh-pages',
+        git_remote(git_repo), checkout_dir])
 
     check_call(['helm', 'dependency', 'update', name])
 
