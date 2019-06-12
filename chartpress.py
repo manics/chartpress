@@ -396,7 +396,7 @@ def publish_pages(name, paths, git_repo, published_repo, extra_message=''):
         '-m', '[{}] Automatic update for commit {}{}'.format(name, version, extra_message)
     ], cwd=checkout_dir)
     check_call(
-        ['git', 'push', 'origin', 'gh-pages'],
+        ['git', 'push', 'origin', 'HEAD:gh-pages'],
         cwd=checkout_dir,
     )
 
