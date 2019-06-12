@@ -105,6 +105,7 @@ Otherwise:
 - Any images in the chart will be built, tagged with the chart version and `latest`, and pushed to the Docker registry.
 - The chart will be built and pushed to the configured GitHub Pages repository
 - The repository will be git tagged with the chart version, and the tagged will be pushed.
+  The commit containing the changes for the tag will be a detached commit for the tag(s) only, it will not be included in your current branch
 
 If you have multiple independently versioned charts you must define `gitTagPrefix` in `chartpress.yaml` to ensure git tags for the two charts can be distinguished.
 
