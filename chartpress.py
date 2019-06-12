@@ -22,6 +22,9 @@ __version__ = '0.3.2.dev'
 
 # name of the environment variable with GitHub token
 GITHUB_TOKEN_KEY = 'GITHUB_TOKEN'
+# name of the environment variable indicating whether this is inside a
+# GitHub action
+GITHUB_ACTION_KEY = 'GITHUB_ACTION'
 
 # name of possible repository keys used in image value
 IMAGE_REPOSITORY_KEYS = {'name', 'repository'}
@@ -48,7 +51,11 @@ def git_remote(git_repo):
 
     Depending on the system setup it returns ssh or https remote.
     """
+    github_action = os.getenv(GITHUB_ACTION_KEY)
     github_token = os.getenv(GITHUB_TOKEN_KEY)
+    if github_action:
+        # GITHUB_TOKEN is set but is used differently inside an Action
+        return 'https://github.com/{0}'.format(git_repo)
     if github_token:
         return 'https://{0}@github.com/{1}'.format(
             github_token, git_repo)
