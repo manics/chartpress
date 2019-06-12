@@ -486,8 +486,16 @@ def main():
                 extra_message=args.extra_message,
             )
 
-    if args.git_release:
+    if args.git_release and git_tags_to_create:
         # Tag as the last step after everything else succeeded
+        modified = check_output(['git', 'diff' ,'HEAD']).strip()
+        if modified:
+            # Don't modify current branch
+            current = check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
+            check_call(['git', 'checkout', current])
+            msg = '[{}] Automatic update for tag'.format(
+                ','.join(git_tags_to_create))
+            check_call(['git', 'commit', '-am', msg])
         for tag in git_tags_to_create:
             check_call(['git', 'tag', tag])
             if args.git_push:
